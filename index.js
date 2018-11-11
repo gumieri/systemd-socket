@@ -1,27 +1,17 @@
-#!/usr/bin/env node
+const { LISTEN_FDS } = process.env
 
-/* See SD_LISTEN_FDS_START from
- * http://cgit.freedesktop.org/systemd/systemd/tree/src/systemd/sd-daemon.h */
-var firstSystemdFD = 3;
-var nextIndex = 0;
+function socket ({ index, nextIndex = 0, firstSystemdFD = 3 }) {
+  if (arguments.length < 1) index = nextIndex++
 
-var systemd = module.exports = function (index) {
-    if (arguments.length < 1) {
-        index = nextIndex++;
-    }
+  if (!LISTEN_FDS) return null
 
-    if (!process.env.LISTEN_FDS) {
-        return null;
-    }
+  if (parseInt(LISTEN_FDS, 10) < nextIndex) return null
 
-    var listenFDs = parseInt(process.env.LISTEN_FDS, 10);
-    if (listenFDs < nextIndex) {
-        return null;
-    }
+  return {
+    fd: firstSystemdFD + index
+  }
+}
 
-    return {
-        fd: firstSystemdFD + index
-    };
-};
-
-// vim:set sw=4 et:
+module.exports = {
+  socket: socket
+}
